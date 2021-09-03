@@ -101,13 +101,13 @@ post_pred_prob <- prediction %>%
 Data for points and lines
 
 ``` r
-plot_data = tibble(time=ordered(c("Y0","Y1","Y4")),y=c(Y0_new,Y1_new,mean(prediction$.prediction)),group="group")
+plot_data = tibble(time=ordered(c("Y0","Y1","Y4 (Predicted)")),y=c(Y0_new,Y1_new,mean(prediction$.prediction)),group="group")
 ```
 
 ``` r
 plot_data %>%
   ggplot(aes(x = time, y = y,group="group")) +
-  stat_halfeye(aes(y = .prediction, x = "(Predicted) Y4", fill = after_stat(ifelse(y > Y4_target, "over", "under"))), data = prediction) +
+  stat_halfeye(aes(y = .prediction, x = "Y4 (Predicted)", fill = after_stat(ifelse(y > Y4_target, "over", "under"))), data = prediction) +
   geom_point(size=3)+
   geom_path()+
   geom_hline(yintercept = Y4_target,linetype="dotted")+
@@ -118,7 +118,7 @@ plot_data %>%
   labs(title = paste0(
     "Posterior prediction for Y4 contitional on baseline Y0 and post-minibolus Y1 <br>",
     "Posterior probability of Y4 <span style='color:#87ceeb;'>superior</span> to target (dotted line): ", scales::percent(post_pred_prob, accuracy = .1)
-  )) +
+  ),caption = "@load_dependent") +
   theme(
     legend.position = "none", axis.line.y = NULL,
     plot.title = element_markdown(lineheight = 1.1),
