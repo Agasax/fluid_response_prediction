@@ -1,0 +1,12 @@
+name: fluid_response_sim
+title: fluid_response_sim
+username:
+account: lmsaxhaug
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4586827
+bundleId: 4996517
+url: https://lmsaxhaug.shinyapps.io/fluid_response_sim/
+when: 1630669604.17971
+asMultiple: FALSE
+asStatic: FALSE

@@ -1,7 +1,24 @@
+---
+title: "Fluid responsiveness simulation"
+output: github_document
+---
+
+```{r setup, include=FALSE}
 library(tidyverse)
 library(brms)
 library(tidybayes)
 library(here)
+library(ggtext)
+```
+
+Simulation of fluid responsiveness prediction trial, by mini-fluid boluses, using predictions from a bayesian linear model.
+
+[Shiny app for interactive simulation](https://lmsaxhaug.shinyapps.io/fluid_response_sim/)
+
+Simulate data, based on [this](https://discourse.datamethods.org/t/calculating-correlation-between-consecutive-changes-dealing-with-spurious-correlation/4528/6) [datamethods.org](datamethods.org) discussion
+
+```{r simulating}
+set.seed(1349)
 
 n <- 1000
 # true values
@@ -16,32 +33,52 @@ Y0 <- Y0 + rnorm(n, 0, 0.2)
 Y1 <- Y1 + rnorm(n, 0, 0.2)
 Y4 <- Y4 + rnorm(n, 0, 0.2)
 df <- tibble(Y0,Y1,Y4)
+```
 
-# fit model (with flat priors)
+Fit models, using flat priors (for simplicity)
+
+```{r fit}
 model1 <- brm(Y4 ~ 0 + Y0 + Y1,
           data = df,
-          file = here("fluid_response","data","model1.Rds"),
+          file = here("fluid_response","model1.Rds"),
           file_refit= "on_change"
           )
+model1
+```
 
-# values to predict from
+New values for Y0 and Y1 to predict Y4 from, and minimum SV to target
+
+```{r # values to predict from}
 Y0_new <- 3.0
 Y1_new <- 3.4
 Y4_target <- 3.6 #minimum co target
 
-#generate posterior predictions based on Y0 and Y1
-prediction <- tibble(Y0=Y0_new,Y1_new) %>%
-  add_predicted_draws(bm)
+```
 
-#calculate posterior probability of Y4 superior to target
+Generate posterior predictions based on Y0 and Y1
+
+```{r prediction}
+prediction <- tibble(Y0=Y0_new,Y1=Y1_new) %>%
+  add_predicted_draws(model1)
+
+head(prediction)
+```
+
+Calculate posterior probability of Y4 superior to target
+
+```{r post_pred_prob}
 post_pred_prob <- prediction %>%
   summarise(prob=mean(.prediction>Y4_target)) %>%
   pull(prob)
+```
 
-#data for points and lines
+Data for points and lines
+
+```{r plot_data}
 plot_data = tibble(time=ordered(c("Y0","Y1","Y4")),y=c(Y0_new,Y1_new,mean(prediction$.prediction)),group="group")
+```
 
-# plot "measured" values and posterior predicted Y4
+```{r plot}
 plot_data %>%
   ggplot(aes(x = time, y = y,group="group")) +
   stat_halfeye(aes(y = .prediction, x = "(Predicted) Y4", fill = after_stat(ifelse(y > Y4_target, "over", "under"))), data = prediction) +
@@ -49,7 +86,7 @@ plot_data %>%
   geom_path()+
   geom_hline(yintercept = Y4_target,linetype="dotted")+
   scale_fill_manual(values = c("over" = "#87ceeb", "under" = "#FFC0CB")) +
-  scale_y_continuous(name = "Y (CO)")+
+  scale_y_continuous(name = "Y (SV)")+
   scale_x_discrete(name="")+
   theme_tidybayes() +
   labs(title = paste0(
@@ -61,3 +98,5 @@ plot_data %>%
     plot.title = element_markdown(lineheight = 1.1),
     legend.text = element_markdown(size = 11)
   )
+
+```

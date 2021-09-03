@@ -1,18 +1,13 @@
-#
-#
-#
-#
-#
-#
-#
-#
+
 
 library(shiny)
 library(tidyverse)
 library(tidybayes)
 library(ggtext)
+library(brms)
 
-model1 <- readRDS(here("fluid_response","data","model1.Rds"))
+
+model1 <- readRDS("model1.Rds")
 
 # Define server logic required to draw the posterior predicted Y4
 shinyServer(function(input, output) {
@@ -21,7 +16,7 @@ shinyServer(function(input, output) {
 
       #generate posterior predictions based on Y0 and Y1
        prediction <- tibble(Y0=input$Y0,Y1=input$Y1) %>%
-            add_predicted_draws(bm)
+            add_predicted_draws(model1)
 
        #calculate posterior probability of Y4 superior to target
        post_pred_prob <- prediction %>%
