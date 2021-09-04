@@ -102,14 +102,19 @@ Data for points and lines
 
 ``` r
 plot_data = tibble(time=ordered(c("Y0","Y1","Y4 (Predicted)")),y=c(Y0_new,Y1_new,mean(prediction$.prediction)),group="group")
+
+
+spaghetti_data <- tibble(Y0=Y0_new,Y1=Y1_new,"Y4 (Predicted)"=sample(prediction$.prediction,200)) %>% pivot_longer(everything(),names_to = "time",values_to = "y") %>% mutate(across(time,as.ordered)) %>% 
+  mutate(group=as.factor(rep(1:200,each=3)))
 ```
 
 ``` r
 plot_data %>%
-  ggplot(aes(x = time, y = y,group="group")) +
-  stat_halfeye(aes(y = .prediction, x = "Y4 (Predicted)", fill = after_stat(ifelse(y > Y4_target, "over", "under"))), data = prediction) +
-  geom_point(size=3)+
-  geom_path()+
+  ggplot(aes(x = time, y = y,group=group)) +
+  stat_halfeye(aes(y = .prediction, x = "Y4 (Predicted)", fill = after_stat(ifelse(y > Y4_target, "over", "under"))), data = prediction,inherit.aes=FALSE) +
+  geom_point(size=3,data = . %>% filter(time!="Y4 (Predicted)"))+
+  geom_line(data = . %>% filter(time!="Y4 (Predicted)"))+
+  geom_line(data = spaghetti_data %>% filter(time!="Y0"),alpha=1/20)+
   geom_hline(yintercept = Y4_target,linetype="dotted")+
   scale_fill_manual(values = c("over" = "#87ceeb", "under" = "#FFC0CB")) +
   scale_y_continuous(name = "Y (SV)")+
@@ -126,4 +131,28 @@ plot_data %>%
   )
 ```
 
-![](README_files/figure-gfm/plot-1.png)<!-- -->
+![](README_files/figure-gfm/prediction_plot-1.png)<!-- -->
+
+Thanks to [@arthur\_alb1](https://twitter.com/arthur_alb1) for the idea
+for spaghettiplot!
+
+``` r
+ post_grid <- tibble(Y0=seq(min(Y0),max(Y0),length.out=50),Y1=seq(min(Y1),max(Y1),length.out=50)) %>% 
+  modelr::data_grid(Y0,Y1) %>% 
+  add_predicted_draws(model1)
+
+ post_prob <- post_grid %>% summarise(posterior_prob=mean((.prediction-Y0)/Y0>0.15))
+```
+
+    ## `summarise()` has grouped output by 'Y0', 'Y1'. You can override using the `.groups` argument.
+
+``` r
+ post_prob %>% 
+   ggplot(aes(x=Y0,y=Y1, fill=posterior_prob)) +
+   geom_tile()+
+   scale_fill_viridis_c(name="")+
+   theme_tidybayes()+
+   labs(title = "Posterior probability of Y4 15% higher than Y0, \nconditional on Y0 and Y1")
+```
+
+![](README_files/figure-gfm/conditional_posterior-1.png)<!-- -->

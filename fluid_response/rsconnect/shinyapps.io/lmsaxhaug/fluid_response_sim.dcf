@@ -5,8 +5,9 @@ account: lmsaxhaug
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 4586827
-bundleId: 4996575
+bundleId: 4999576
 url: https://lmsaxhaug.shinyapps.io/fluid_response_sim/
-when: 1630670680.25095
+when: 1630754607.26733
 asMultiple: FALSE
 asStatic: FALSE
+ignoredFiles: model2.Rds
